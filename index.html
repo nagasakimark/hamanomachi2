@@ -18,6 +18,25 @@
         <!-- Left Panel: Game Area -->
         <div id="game-panel">
             <div id="game-container"></div>
+            
+            <!-- Win/Lose Animation Overlays (inside game-panel) -->
+            <div id="win-overlay" class="animation-overlay" style="display: none;">
+                <div class="animation-content">
+                    <canvas id="win-canvas"></canvas>
+                    <div class="animation-text">
+                        <p id="win-message"></p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="lose-overlay" class="animation-overlay" style="display: none;">
+                <div class="animation-content">
+                    <canvas id="lose-canvas"></canvas>
+                    <div class="animation-text">
+                        <p id="lose-message"></p>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Right Panel: Block Programming Interface -->
@@ -50,5 +69,67 @@
     <!-- Note: game-hamanomachi.js is loaded dynamically by main.js -->
     <script src="js/blockly-config.js"></script>
     <script src="js/main.js"></script>
+    
+    <!-- Lottie Web Player -->
+    <script type="module">
+      import { DotLottie } from "https://cdn.jsdelivr.net/npm/@lottiefiles/dotlottie-web/+esm";
+      
+      // Make DotLottie available globally
+      window.DotLottie = DotLottie;
+      
+      // Initialize animations when ready
+      window.initLottieAnimations = function() {
+        const gamePanel = document.getElementById('game-panel');
+        const rect = gamePanel.getBoundingClientRect();
+        // Use 60% of the smaller dimension for a nicely sized animation
+        const size = Math.min(rect.width, rect.height) * 0.6;
+        
+        console.log('Game panel size:', rect.width, 'x', rect.height);
+        console.log('Animation size:', size);
+        
+        // Set canvas sizes to be square
+        const winCanvas = document.getElementById('win-canvas');
+        const loseCanvas = document.getElementById('lose-canvas');
+        
+        // Set both width/height in CSS and canvas attributes for proper rendering
+        winCanvas.width = size;
+        winCanvas.height = size;
+        winCanvas.style.width = size + 'px';
+        winCanvas.style.height = size + 'px';
+        
+        loseCanvas.width = size;
+        loseCanvas.height = size;
+        loseCanvas.style.width = size + 'px';
+        loseCanvas.style.height = size + 'px';
+        
+        console.log('Win canvas position:', winCanvas.getBoundingClientRect());
+        
+        // Store animation instances globally
+        window.winAnimation = new DotLottie({
+          autoplay: false,
+          loop: true,
+          canvas: winCanvas,
+          src: "assets/images/win.lottie",
+          renderConfig: {
+            devicePixelRatio: window.devicePixelRatio || 1
+          }
+        });
+        
+        window.loseAnimation = new DotLottie({
+          autoplay: false,
+          loop: true,
+          canvas: loseCanvas,
+          src: "assets/images/lose.lottie",
+          renderConfig: {
+            devicePixelRatio: window.devicePixelRatio || 1
+          }
+        });
+        
+        console.log('Lottie animations initialized');
+      };
+      
+      // Initialize after a short delay to ensure DOM is ready
+      setTimeout(() => window.initLottieAnimations(), 500);
+    </script>
 </body>
 </html>

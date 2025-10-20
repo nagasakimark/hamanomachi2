@@ -147,42 +147,111 @@ body {
 /* Custom Blockly styling for kid-friendly interface */
 .blocklyToolboxDiv {
     background-color: #f8f9fa !important;
-    border-right: 3px solid #FF6B6B !important;
+    border-right: 3px solid #28a745 !important;
+    min-width: 70px !important; /* Ensure toolbox has a minimum width */
 }
 
-.blocklyTreeRow {
-    background: linear-gradient(135deg, #FF6B6B, #ff5252) !important;
-    border-radius: 8px !important;
+/* Push the flyout to the right of the toolbox */
+.blocklyFlyout {
+    left: 25px !important; /* Start after the toolbox */
+}
+
+/* Ensure workspace doesn't overlap with toolbox on small screens */
+.blocklyMainBackground {
+    x: 70 !important; /* SVG x coordinate - push workspace right */
+}
+
+/* Category button styling */
+.blocklyToolboxCategory {
+    background: rgba(40, 167, 69, 0.85) !important; /* Semi-transparent green */
+    border-radius: 5px !important;
     margin: 4px !important;
-    padding: 8px 12px !important;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
-    transition: all 0.2s ease !important;
-}
-
-.blocklyTreeRow:hover {
-    background: linear-gradient(135deg, #ff5252, #ff1744) !important;
-    transform: translateY(-1px) !important;
-    box-shadow: 0 4px 8px rgba(0,0,0,0.2) !important;
-}
-
-.blocklyTreeIcon {
-    width: 24px !important;
-    height: 24px !important;
+    padding: 4px !important; /* Reduced from 16px */
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15) !important;
+    transition: all 0.3s ease !important;
+    min-height: fit-content !important; /* Auto instead of fixed 70px */
+    width: fit-content !important; /* Only as wide as needed */
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    cursor: pointer !important;
+}
+
+.blocklyToolboxCategory:hover {
+    background: rgba(40, 167, 69, 0.95) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.3) !important;
+}
+
+.blocklyToolboxCategory:active,
+.blocklyToolboxCategory.blocklyTreeSelected {
+    background: rgba(40, 167, 69, 1) !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.25) !important;
+}
+
+/* Logo image styling */
+.category-logo {
+    transition: all 0.3s ease !important;
+}
+
+/* Old tree-based styling (fallback) */
+.blocklyTreeRow {
+    background: rgba(40, 167, 69, 0.85) !important;
+    border-radius: 8px !important;
+    margin: 4px !important;
+    padding: 12px 16px !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1) !important;
+    transition: all 0.3s ease !important;
+    min-height: 50px !important;
+    display: flex !important;
+    align-items: center !important;
+}
+
+.blocklyTreeRow:hover {
+    background: rgba(40, 167, 69, 1) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.25) !important;
+    cursor: pointer !important;
+}
+
+.blocklyTreeRow.blocklyTreeSelected {
+    background: rgba(40, 167, 69, 1) !important;
+}
+
+.blocklyTreeIcon {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    margin-right: 12px !important;
+    border-radius: 6px !important;
+    padding: 4px !important;
+}
+
+.blocklyTreeIcon img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
 }
 
 .blocklyTreeLabel {
     color: white !important;
     font-weight: bold !important;
-    font-size: 16px !important;
-    margin-left: 8px !important;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.3) !important;
+    font-size: 18px !important;
+    text-shadow: 2px 2px 3px rgba(0,0,0,0.4) !important;
+    flex: 1 !important;
 }
 
 /* Hide the default expand/collapse functionality */
 .blocklyTreeIcon::before {
+    display: none !important;
+}
+
+.blocklyTreeIconOpen,
+.blocklyTreeIconClosed {
     display: none !important;
 }
 
@@ -193,11 +262,54 @@ body {
 
 /* Make the trash can more colorful and kid-friendly */
 .blocklyTrash {
-    fill: #FF6B6B !important;
+    fill: rgba(40, 167, 69, 0.85) !important; /* Green by default */
+    transition: fill 0.3s ease !important;
 }
 
 .blocklyTrash:hover {
-    fill: #ff5252 !important;
+    fill: rgba(40, 167, 69, 1) !important; /* Solid green on hover */
+}
+
+/* Change trash can to red when dragging over it */
+.blocklyTrash.blocklyTrashDelete {
+    fill: #dc3545 !important; /* Red when ready to delete */
+    animation: pulse-trash 0.5s ease-in-out infinite !important;
+}
+
+/* Pulse animation for trash when dragging over */
+@keyframes pulse-trash {
+    0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+    }
+    50% {
+        transform: scale(1.1);
+        opacity: 0.8;
+    }
+}
+
+/* Add delete icon overlay when dragging */
+.blocklyTrashLid {
+    transition: all 0.3s ease !important;
+}
+
+.blocklyTrash.blocklyTrashDelete .blocklyTrashLid {
+    transform: translateY(-5px) !important;
+}
+
+/* Position trash can to bottom left of workspace */
+.blocklyTrashBody {
+    transform: translate(0, 0) !important;
+}
+
+/* Move trash can to bottom left */
+g.blocklyTrash {
+    transform: translate(15px, calc(100% - 80px)) !important;
+}
+
+/* Ensure trash can stays in bottom left during drag */
+.blocklyTrash[transform] {
+    transform: translate(15px, calc(100% - 80px)) !important;
 }
 
 /* Add some fun animations to blocks */
@@ -207,8 +319,8 @@ body {
 
 /* Style the toolbox background */
 .blocklyFlyoutBackground {
-    fill: #f8f9fa !important;
-    stroke: #FF6B6B !important;
+    fill: rgb(255, 255, 255) !important; /* Light green tint */
+    stroke: #949494 !important;
     stroke-width: 2 !important;
 }
 
@@ -261,8 +373,8 @@ body {
 
 /* Keep main workspace vertical scrollbars but hide flyout scrollbars when closed */
 .blocklyMainWorkspace .blocklyScrollbarHandle[data-orientation="vertical"] {
-    fill: #FF6B6B !important;
-    stroke: #ff5252 !important;
+    fill: #28a745 !important;
+    stroke: #218838 !important;
 }
 
 .blocklyMainWorkspace .blocklyScrollbarBackground[data-orientation="vertical"] {
@@ -272,8 +384,8 @@ body {
 
 /* Style vertical scrollbar to match theme - only when flyout is open */
 .blocklyFlyout .blocklyScrollbarHandle[data-orientation="vertical"] {
-    fill: #FF6B6B !important;
-    stroke: #ff5252 !important;
+    fill: #28a745 !important;
+    stroke: #218838 !important;
 }
 
 .blocklyFlyout .blocklyScrollbarBackground[data-orientation="vertical"] {
@@ -316,8 +428,8 @@ body {
 /* Play button - positioned absolutely to overlay blocks area */
 .play-button {
     position: absolute;
-    bottom: 80px; /* Moved up from 15px */
-    left: 15px;
+    bottom: 40px;
+    right: 25px; /* Moved to bottom right */
     width: 60px;
     height: 60px;
     border-radius: 50%;
@@ -332,7 +444,7 @@ body {
     align-items: center;
     justify-content: center;
     padding-left: 4px;
-    z-index: 100;
+    z-index: 10; /* Lower than Blockly flyout (default ~1000) */
 }
 
 .play-button:hover {
@@ -521,4 +633,94 @@ body {
     margin: 10px 0;
     border-radius: 4px;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Make all Blockly block text white */
+.blocklyText {
+    fill: white !important;
+    font-weight: bold !important;
+}
+
+/* Ensure input fields and numbers are also white */
+.blocklyEditableText > text {
+    fill: white !important;
+}
+
+/* Make field text white */
+.blocklyFieldLabel {
+    fill: white !important;
+}
+
+/* Make dropdown text white */
+.blocklyDropdownText {
+    fill: white !important;
+}
+
+/* Win/Lose Animation Overlays */
+.animation-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.7);
+    z-index: 10000;
+    backdrop-filter: blur(5px);
+}
+
+.animation-overlay .animation-content {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.animation-overlay canvas {
+    display: block;
+    /* Canvas will be sized by JavaScript */
+}
+
+.animation-overlay .animation-text {
+    text-align: center;
+    color: white;
+    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.8);
+    margin-top: 30px;
+    padding: 0 20px;
+}
+
+.animation-overlay .animation-text p {
+    font-size: 28px;
+    font-weight: bold;
+    margin: 0;
+    line-height: 1.4;
+}
+
+.animation-overlay .animation-text h2 {
+    font-size: 48px;
+    margin: 0 0 10px 0;
+    font-weight: bold;
+}
+
+.animation-overlay .animation-text p {
+    font-size: 24px;
+    margin: 5px 0;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+    .animation-overlay {
+        width: 100%;
+    }
+    
+    .animation-overlay .animation-text h2 {
+        font-size: 36px;
+    }
+    
+    .animation-overlay .animation-text p {
+        font-size: 20px;
+    }
 }

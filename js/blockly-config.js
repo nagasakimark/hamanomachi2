@@ -2,6 +2,16 @@
 
 // Define custom blocks with bright, kid-friendly colors
 Blockly.defineBlocksWithJsonArray([
+    // Start block
+    {
+        "type": "start",
+        "message0": "when ▶ clicked",
+        "nextStatement": null,
+        "colour": "#28A745", // Green color
+        "tooltip": "Starting point - connect your program here",
+        "helpUrl": ""
+    },
+    
     // Go Straight block
     {
         "type": "go_straight",
@@ -40,7 +50,7 @@ Blockly.defineBlocksWithJsonArray([
         "message0": "turn left",
         "previousStatement": null,
         "nextStatement": null,
-        "colour": "#00FF00", // Bright green
+        "colour": "#E91E63", // Pink color (Material Design Pink 500 - good contrast with white)
         "tooltip": "Turn the character 90 degrees to the left",
         "helpUrl": ""
     },
@@ -61,7 +71,7 @@ Blockly.defineBlocksWithJsonArray([
         "type": "look_left",
         "message0": "you can see it on your left",
         "previousStatement": null,
-        "nextStatement": null,
+        "nextStatement": null, // Remove this to prevent blocks underneath
         "colour": "#FF8000", // Bright orange
         "tooltip": "Turn left and move forward one block",
         "helpUrl": ""
@@ -72,7 +82,7 @@ Blockly.defineBlocksWithJsonArray([
         "type": "look_right",
         "message0": "you can see it on your right",
         "previousStatement": null,
-        "nextStatement": null,
+        "nextStatement": null, // Remove this to prevent blocks underneath
         "colour": "#8000FF", // Bright purple
         "tooltip": "Turn right and move forward one block",
         "helpUrl": ""
@@ -138,10 +148,52 @@ Blockly.Blocks['go_straight_littlebit'] = {
     }
 };
 
+// Override the start block
+Blockly.Blocks['start'] = {
+    init: function() {
+        this.appendDummyInput()
+            .appendField("when ▶ clicked");
+        this.setNextStatement(true, null);
+        this.setColour("#28A745");
+        this.setTooltip("Starting point - connect your program here");
+        this.setDeletable(false); // Can't be deleted
+        this.setMovable(true); // Can be moved
+    }
+};
+
+// Override the look_left block to remove nextStatement
+Blockly.Blocks['look_left'] = {
+    init: function() {
+        this.appendDummyInput()
+            .appendField("you can see it on your left");
+        this.setPreviousStatement(true, null);
+        // No nextStatement - this is a terminal block
+        this.setColour("#FF8000");
+        this.setTooltip("Turn left and move forward one block");
+    }
+};
+
+// Override the look_right block to remove nextStatement
+Blockly.Blocks['look_right'] = {
+    init: function() {
+        this.appendDummyInput()
+            .appendField("you can see it on your right");
+        this.setPreviousStatement(true, null);
+        // No nextStatement - this is a terminal block
+        this.setColour("#8000FF");
+        this.setTooltip("Turn right and move forward one block");
+    }
+};
+
 // Code generators for JavaScript
 const javascriptGenerator = Blockly.JavaScript;
 
 // Modern generator registration
+javascriptGenerator.forBlock['start'] = function(block) {
+    // Start block doesn't generate code itself, just its children
+    return '';
+};
+
 javascriptGenerator.forBlock['go_straight'] = function(block) {
     const steps = block.getFieldValue('STEPS');
     return `executeCommand('move-forward', ${steps});\n`;
@@ -168,6 +220,7 @@ javascriptGenerator.forBlock['look_right'] = function(block) {
 };
 
 // Legacy generator registration (fallback)
+Blockly.JavaScript['start'] = javascriptGenerator.forBlock['start'];
 Blockly.JavaScript['go_straight'] = javascriptGenerator.forBlock['go_straight'];
 Blockly.JavaScript['go_straight_littlebit'] = javascriptGenerator.forBlock['go_straight_littlebit'];
 Blockly.JavaScript['turn_left'] = javascriptGenerator.forBlock['turn_left'];
@@ -182,7 +235,7 @@ const blocklyConfig = {
         "contents": [
             {
                 "kind": "category",
-                "name": "Blocks",
+                "name": "", // Empty name - will be replaced with logo
                 "categorystyle": "game_category",
                 "contents": [
                     {
@@ -248,7 +301,7 @@ const blocklyConfig = {
         'base': Blockly.Themes.Classic,
         'categoryStyles': {
             'game_category': {
-                'colour': '#FF6B6B'
+                'colour': '#28a745' // Green color
             }
         }
     }),
@@ -281,6 +334,11 @@ class BlocklySystem {
                 
                 this.workspace = Blockly.inject(blocklyDiv, blocklyConfig);
                 
+                // Position trashcan to bottom left
+                setTimeout(() => {
+                    this.positionTrashcan();
+                }, 100);
+                
                 // Fix touch events for mobile devices
                 this.setupTouchEventHandling();
                 
@@ -290,10 +348,22 @@ class BlocklySystem {
                 // Setup resize handler
                 this.setupResizeHandler();
                 
-                // Add custom icon to category after initialization
-                setTimeout(() => {
-                    this.addCustomCategoryIcon();
-                }, 100);
+                // Add custom icon to category after initialization with retry logic
+                const tryAddIcon = (attempts = 0, maxAttempts = 10) => {
+                    console.log(`Attempting to add custom icon (attempt ${attempts + 1}/${maxAttempts})...`);
+                    const success = this.addCustomCategoryIcon();
+                    
+                    if (!success && attempts < maxAttempts - 1) {
+                        setTimeout(() => tryAddIcon(attempts + 1, maxAttempts), 300);
+                    } else if (success) {
+                        console.log('Custom icon successfully added!');
+                    } else {
+                        console.warn('Failed to add custom icon after', maxAttempts, 'attempts');
+                    }
+                };
+                
+                // Start trying after a short delay to let Blockly initialize
+                setTimeout(() => tryAddIcon(), 300);
                 
                 // Verify generators are properly registered
                 console.log('Checking JavaScript generators:');
@@ -312,6 +382,25 @@ class BlocklySystem {
                     this.onWorkspaceChange();
                 });
                 
+                // Add listener to shift blocks when created from flyout
+                this.workspace.addChangeListener((event) => {
+                    if (event.type === Blockly.Events.BLOCK_CREATE && !event.isUiEvent) {
+                        // Get the newly created block
+                        const block = this.workspace.getBlockById(event.blockId);
+                        if (block && !block.parentBlock_) {
+                            // Only shift if it's a top-level block (not attached to another)
+                            const position = block.getRelativeToSurfaceXY();
+                            // Shift 25px to the right if it's near the left edge
+                            if (position.x < 100) {
+                                block.moveBy(25, 0);
+                            }
+                        }
+                    }
+                });
+                
+                // Setup trash can drag detection
+                this.setupTrashcanDragDetection();
+                
                 // Set up mutation observer to catch any scrollbars that appear
                 this.setupScrollbarObserver();
                 
@@ -328,6 +417,27 @@ class BlocklySystem {
         }
     }
     
+    positionTrashcan() {
+        // Move trash can to bottom left
+        if (this.workspace && this.workspace.trashcan) {
+            const metrics = this.workspace.getMetrics();
+            const trashcanX = 15; // Left padding
+            const trashcanY = metrics.viewHeight - 80; // Bottom position
+            
+            // Set the trash can position
+            this.workspace.trashcan.position.x = trashcanX;
+            this.workspace.trashcan.position.y = trashcanY;
+            
+            // Force update the position
+            if (this.workspace.trashcan.svgGroup_) {
+                this.workspace.trashcan.svgGroup_.setAttribute(
+                    'transform',
+                    `translate(${trashcanX}, ${trashcanY})`
+                );
+            }
+        }
+    }
+    
     setupTouchEventHandling() {
         // Simple fix: just disable all workspace gestures to prevent panning interference
         console.log('Touch event handling configured for Blockly');
@@ -336,6 +446,83 @@ class BlocklySystem {
     setupBlockBoundaries() {
         // Block boundaries disabled - not needed for touch devices
         // The workspace will naturally constrain blocks
+    }
+    
+    setupTrashcanDragDetection() {
+        let isDraggingBlock = false;
+        
+        // Monitor workspace events for drag detection
+        this.workspace.addChangeListener((event) => {
+            if (event.type === Blockly.Events.BLOCK_DRAG) {
+                // Find the trash SVG element
+                const trashElement = document.querySelector('g.blocklyTrash');
+                const toolboxElement = document.querySelector('.blocklyToolboxDiv');
+                
+                if (trashElement) {
+                    if (event.isStart) {
+                        // Block drag started
+                        isDraggingBlock = true;
+                        console.log('Block drag started');
+                    } else {
+                        // Block drag ended - reset trash and toolbox to normal
+                        isDraggingBlock = false;
+                        trashElement.classList.remove('blocklyTrashDelete');
+                        if (toolboxElement) {
+                            toolboxElement.classList.remove('blocklyToolboxDelete');
+                        }
+                        console.log('Block drag ended, trash and toolbox reset');
+                    }
+                }
+            }
+        });
+        
+        // Monitor when blocks are dragged over the trash OR toolbox
+        const trashElement = document.querySelector('g.blocklyTrash');
+        const toolboxElement = document.querySelector('.blocklyToolboxDiv');
+        
+        if (trashElement) {
+            console.log('Setting up trash and toolbox hover detection');
+            setInterval(() => {
+                if (isDraggingBlock) {
+                    // Check trash
+                    if (this.workspace.trashcan) {
+                        const isOverTrash = this.workspace.trashcan.isOpen;
+                        if (isOverTrash) {
+                            if (!trashElement.classList.contains('blocklyTrashDelete')) {
+                                trashElement.classList.add('blocklyTrashDelete');
+                                console.log('Block over trash - turning red');
+                            }
+                        } else {
+                            if (trashElement.classList.contains('blocklyTrashDelete')) {
+                                trashElement.classList.remove('blocklyTrashDelete');
+                                console.log('Block not over trash - back to green');
+                            }
+                        }
+                    }
+                    
+                    // Check toolbox (Blockly treats it as a delete area)
+                    if (this.workspace.toolbox_ && toolboxElement) {
+                        const isOverToolbox = this.workspace.toolbox_.position === this.workspace.deleteAreaToolbox_;
+                        // Check if the current drag target would delete on the toolbox
+                        const wouldDelete = this.workspace.isDeleteArea && this.workspace.isDeleteArea();
+                        
+                        if (wouldDelete || (this.workspace.deleteAreaToolbox_ && this.workspace.deleteAreaToolbox_.wouldDelete())) {
+                            if (!toolboxElement.classList.contains('blocklyToolboxDelete')) {
+                                toolboxElement.classList.add('blocklyToolboxDelete');
+                                console.log('Block over toolbox - turning red');
+                            }
+                        } else {
+                            if (toolboxElement.classList.contains('blocklyToolboxDelete')) {
+                                toolboxElement.classList.remove('blocklyToolboxDelete');
+                                console.log('Block not over toolbox - back to normal');
+                            }
+                        }
+                    }
+                }
+            }, 50);
+        } else {
+            console.warn('Trash SVG element not found');
+        }
     }
     
     constrainBlockToWorkspace(block) {
@@ -479,29 +666,68 @@ class BlocklySystem {
     }
 
     addCustomCategoryIcon() {
-        // Find the category and add a custom icon
-        const categoryElement = document.querySelector('.blocklyTreeRow');
-        if (categoryElement) {
-            const iconElement = categoryElement.querySelector('.blocklyTreeIcon');
-            if (iconElement) {
-                // Create a colorful game controller icon using CSS
-                iconElement.innerHTML = `
-                    <div style="
-                        width: 20px; 
-                        height: 20px; 
-                        background: linear-gradient(45deg, #FF6B6B, #4ECDC4);
-                        border-radius: 50%;
-                        position: relative;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        color: white;
-                        font-weight: bold;
-                        font-size: 12px;
-                    ">🎮</div>
-                `;
-            }
+        // Blockly uses .blocklyToolboxCategory for category buttons
+        const categories = document.querySelectorAll('.blocklyToolboxCategory');
+        console.log('Found .blocklyToolboxCategory elements:', categories.length);
+        
+        let categoryElement = null;
+        
+        // Find the game_category (it should be the first/only one)
+        for (let cat of categories) {
+            console.log('Category:', cat, 'Classes:', cat.className);
+            // Just take the first category since we only have one
+            categoryElement = cat;
+            break;
         }
+        
+        if (categoryElement) {
+            console.log('SUCCESS! Found category button:', categoryElement);
+            
+            // Clear any existing content
+            categoryElement.innerHTML = '';
+            
+            // Create and insert the logo image
+            const img = document.createElement('img');
+            img.src = 'assets/images/logo.png';
+            img.alt = 'Blocks';
+            img.className = 'category-logo';
+            img.style.width = '50px';
+            img.style.height = '50px';
+            img.style.objectFit = 'contain';
+            img.style.display = 'block';
+            img.style.margin = '0 auto';
+            img.style.transition = 'all 0.3s ease';
+            img.style.pointerEvents = 'none'; // CRITICAL: Let clicks pass through to the button
+            
+            // Insert logo
+            categoryElement.appendChild(img);
+            
+            // Add hover effects to the button (not the image)
+            categoryElement.addEventListener('mouseenter', () => {
+                img.style.transform = 'scale(1.1)';
+                img.style.filter = 'brightness(1.2)';
+            });
+            
+            categoryElement.addEventListener('mouseleave', () => {
+                img.style.transform = 'scale(1)';
+                img.style.filter = 'brightness(1)';
+            });
+            
+            // Add click/active effect
+            categoryElement.addEventListener('mousedown', () => {
+                img.style.transform = 'scale(0.95)';
+            });
+            
+            categoryElement.addEventListener('mouseup', () => {
+                img.style.transform = 'scale(1.1)';
+            });
+            
+            console.log('Logo image inserted successfully!');
+            return true;
+        }
+        
+        console.log('Category button not found, retrying...');
+        return false;
     }
     
     setupEventListeners() {
@@ -541,56 +767,27 @@ class BlocklySystem {
     }
     
     addSampleProgram() {
-        // Add a simple example program using the modern API
+        // Initialize workspace with just the start block
         try {
             let xml;
             // Try modern API first, fall back to legacy if needed
             if (Blockly.utils && Blockly.utils.xml && Blockly.utils.xml.textToDom) {
                 xml = Blockly.utils.xml.textToDom(`
                     <xml xmlns="https://developers.google.com/blockly/xml">
-                        <block type="go_straight" x="20" y="20">
-                            <field name="STEPS">2</field>
-                            <next>
-                                <block type="turn_right">
-                                    <next>
-                                        <block type="go_straight">
-                                            <field name="STEPS">1</field>
-                                            <next>
-                                                <block type="look_left"></block>
-                                            </next>
-                                        </block>
-                                    </next>
-                                </block>
-                            </next>
-                        </block>
+                        <block type="start" x="25" y="20"></block>
                     </xml>
                 `);
             } else if (Blockly.Xml && Blockly.Xml.textToDom) {
                 xml = Blockly.Xml.textToDom(`
                     <xml xmlns="https://developers.google.com/blockly/xml">
-                        <block type="go_straight" x="20" y="20">
-                            <field name="STEPS">2</field>
-                            <next>
-                                <block type="turn_right">
-                                    <next>
-                                        <block type="go_straight">
-                                            <field name="STEPS">1</field>
-                                            <next>
-                                                <block type="look_left"></block>
-                                            </next>
-                                        </block>
-                                    </next>
-                                </block>
-                            </next>
-                        </block>
+                        <block type="start" x="25" y="20"></block>
                     </xml>
                 `);
             } else {
                 // Manual block creation as fallback
                 console.log('Using manual block creation fallback');
-                const block = this.workspace.newBlock('go_straight');
-                block.setFieldValue('2', 'STEPS');
-                block.moveBy(20, 20);
+                const block = this.workspace.newBlock('start');
+                block.moveBy(45, 20);
                 block.initSvg();
                 block.render();
                 return;
@@ -600,15 +797,15 @@ class BlocklySystem {
                 Blockly.Xml.domToWorkspace(xml, this.workspace);
             }
         } catch (error) {
-            console.log('Could not add sample program:', error);
-            // Try to add at least one block manually
+            console.log('Could not add start block:', error);
+            // Try to add start block manually
             try {
-                const block = this.workspace.newBlock('go_straight');
-                block.moveBy(20, 20);
+                const block = this.workspace.newBlock('start');
+                block.moveBy(45, 20);
                 block.initSvg();
                 block.render();
             } catch (fallbackError) {
-                console.log('Could not create any blocks:', fallbackError);
+                console.log('Could not create start block:', fallbackError);
             }
         }
     }
@@ -632,15 +829,31 @@ class BlocklySystem {
             return;
         }
         
-        // Generate JavaScript code from blocks
+        // Find the start block - it should be a top block of type 'start'
+        const topBlocks = this.workspace.getTopBlocks(true);
+        const startBlock = topBlocks.find(block => block.type === 'start');
+        
+        if (!startBlock) {
+            this.showMessage('No start block found! Add blocks to the start block.');
+            return;
+        }
+        
+        // Generate JavaScript code only from the start block and its children
         let code;
         try {
             // Try modern approach first
-            if (javascriptGenerator && typeof javascriptGenerator.workspaceToCode === 'function') {
-                code = javascriptGenerator.workspaceToCode(this.workspace);
-            } else if (Blockly.JavaScript && typeof Blockly.JavaScript.workspaceToCode === 'function') {
+            if (javascriptGenerator && typeof javascriptGenerator.blockToCode === 'function') {
+                code = javascriptGenerator.blockToCode(startBlock);
+                // If the result is an array, take the first element (the code string)
+                if (Array.isArray(code)) {
+                    code = code[0];
+                }
+            } else if (Blockly.JavaScript && typeof Blockly.JavaScript.blockToCode === 'function') {
                 // Fallback to legacy approach
-                code = Blockly.JavaScript.workspaceToCode(this.workspace);
+                code = Blockly.JavaScript.blockToCode(startBlock);
+                if (Array.isArray(code)) {
+                    code = code[0];
+                }
             } else {
                 throw new Error('No JavaScript generator available');
             }
@@ -650,8 +863,8 @@ class BlocklySystem {
             return;
         }
         
-        if (!code.trim()) {
-            this.showMessage('No blocks to execute! Add some blocks first.');
+        if (!code || !code.trim()) {
+            this.showMessage('No blocks attached to start! Connect blocks to the start block.');
             return;
         }
         
@@ -784,6 +997,10 @@ class BlocklySystem {
     resizeWorkspace() {
         if (this.workspace) {
             Blockly.svgResize(this.workspace);
+            // Reposition trashcan after resize
+            setTimeout(() => {
+                this.positionTrashcan();
+            }, 100);
         }
     }
     

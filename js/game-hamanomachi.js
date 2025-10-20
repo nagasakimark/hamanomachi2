@@ -38,9 +38,20 @@ class GameScene extends Phaser.Scene {
         // Score tracking
         this.score = 0;
         
+        // Easter egg: track turn sequence
+        this.turnSequence = [];
+        
         // Debug settings
         this.showPoints = false;
         this.showPaths = false;
+        
+        // Track if this is first initialization
+        this.needsHighlight = true;
+    }
+
+    init() {
+        // This runs every time the scene starts (including after page refresh)
+        this.needsHighlight = true;
     }
 
     preload() {
@@ -83,8 +94,13 @@ class GameScene extends Phaser.Scene {
         // Create player sprite with animations
         this.createPlayerAnimations();
         this.playerSprite = this.add.sprite(0, 0, 'player', 0);
-        this.playerSprite.setScale(0.8 * this.mapScale);
+        this.playerSprite.setScale(1.8 * this.mapScale); // 1.5x again (was 1.2, now 1.8)
+        this.playerSprite.setOrigin(0.5, 0.84); // Origin ~10 pixels up from bottom (1.0 - 10/64 ≈ 0.84)
         this.playerSprite.setDepth(10); // Ensure player is on top
+        
+        // Enable pixel-perfect rendering (no blur/anti-aliasing)
+        this.playerSprite.setTexture('player', 0);
+        this.playerSprite.texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
         
         // Initialize game
         this.initializeGame();
@@ -113,7 +129,7 @@ class GameScene extends Phaser.Scene {
             
             // Update player sprite if it exists
             if (this.playerSprite && this.currentPlayerPosition) {
-                this.playerSprite.setScale(0.8 * this.mapScale);
+                this.playerSprite.setScale(1.8 * this.mapScale); // 1.5x again (was 1.2, now 1.8)
                 this.updatePlayerSprite();
             }
             
@@ -155,6 +171,9 @@ class GameScene extends Phaser.Scene {
             return;
         }
 
+        // Reset turn sequence for easter egg
+        this.turnSequence = [];
+
         // Get start points and destinations
         const startPoints = this.mapData.points.filter(p => p.type === 'start');
         const destinations = this.mapData.points.filter(p => p.type === 'destination');
@@ -190,6 +209,14 @@ class GameScene extends Phaser.Scene {
         this.updatePlayerSprite();
         this.updateCurrentConnections();
         this.setInitialPlayerDirection();
+        
+        // Highlight the player on initial spawn (after brief delay to ensure sprite is fully rendered)
+        if (this.needsHighlight) {
+            this.time.delayedCall(200, () => {
+                this.highlightPlayer();
+                this.needsHighlight = false; // Only highlight once per scene initialization
+            });
+        }
         
         // Update UI immediately (before blocklySystem might be ready)
         const goalText = document.getElementById('goal-text');
@@ -233,8 +260,60 @@ class GameScene extends Phaser.Scene {
         
         this.playerSprite.setPosition(
             mapOffsetX + this.currentPlayerPosition.x * this.mapScale,
-            mapOffsetY + this.currentPlayerPosition.y * this.mapScale - 10 * this.mapScale // Adjust for sprite alignment
+            mapOffsetY + this.currentPlayerPosition.y * this.mapScale // Position uses bottom-center origin now
         );
+    }
+
+    highlightPlayer() {
+        if (!this.playerSprite) return;
+        
+        // Create a pulsing highlight effect with scale and tint
+        this.tweens.add({
+            targets: this.playerSprite,
+            scaleX: 2.1 * this.mapScale, // 1.5x pulse from 1.8 base = 2.7, using 2.1 for subtler effect
+            scaleY: 2.1 * this.mapScale,
+            duration: 300,
+            yoyo: true,
+            repeat: 2,
+            ease: 'Sine.easeInOut',
+            onComplete: () => {
+                // Reset to normal scale
+                this.playerSprite.setScale(1.8 * this.mapScale);
+            }
+        });
+        
+        // Add a bright tint flash
+        this.tweens.add({
+            targets: this.playerSprite,
+            tint: 0xFFFFFF,
+            duration: 150,
+            yoyo: true,
+            repeat: 2,
+            ease: 'Sine.easeInOut'
+        });
+        
+        // Create a circular glow effect around the player
+        const glowCircle = this.add.circle(
+            this.playerSprite.x,
+            this.playerSprite.y,
+            30 * this.mapScale,
+            0xFFFF00,
+            0.6
+        );
+        glowCircle.setDepth(9); // Just below player
+        
+        // Animate the glow circle
+        this.tweens.add({
+            targets: glowCircle,
+            scaleX: 2,
+            scaleY: 2,
+            alpha: 0,
+            duration: 800,
+            ease: 'Power2',
+            onComplete: () => {
+                glowCircle.destroy();
+            }
+        });
     }
 
     updateCurrentConnections() {
@@ -458,6 +537,9 @@ class GameScene extends Phaser.Scene {
             return Promise.resolve();
         }
         
+        // Reset turn sequence - movement breaks the spinning pattern
+        this.turnSequence = [];
+        
         console.log(`Moving straight for ${blocks} blocks from (${this.currentPlayerPosition.x}, ${this.currentPlayerPosition.y})`);
         const pathCheck = this.canMoveStraightFor(blocks);
         
@@ -516,13 +598,16 @@ class GameScene extends Phaser.Scene {
                 bestConnection.p2 : bestConnection.p1;
             path.push(nextPos);
             
-            // Only decrement for non-littlebit points
+            // Only decrement for non-littlebit points and not start3
             const nextPoint = this.mapData.points.find(p => this.arePointsEqual(p, nextPos));
             const isLittlebit = nextPoint && nextPoint.type === 'littlebit';
+            const isStart3 = nextPoint && nextPoint.id === 'start3';
             
-            if (!isLittlebit) {
+            if (!isLittlebit && !isStart3) {
                 remainingBlocks--;
                 console.log(`✓ Moved to MAJOR point (${nextPos.x}, ${nextPos.y}) [${nextPoint?.name || 'unnamed'}], ${remainingBlocks} blocks remaining`);
+            } else if (isStart3) {
+                console.log(`→ Passed through start3 point (${nextPos.x}, ${nextPos.y}) - IGNORED`);
             } else {
                 console.log(`→ Passed through littlebit point (${nextPos.x}, ${nextPos.y})`);
             }
@@ -555,6 +640,9 @@ class GameScene extends Phaser.Scene {
         if (this.gameOver || this.isMoving || this.currentConnections.length === 0) {
             return Promise.resolve();
         }
+        
+        // Reset turn sequence - movement breaks the spinning pattern
+        this.turnSequence = [];
         
         const pathCheck = this.canMoveStraightForLittlebit();
         
@@ -620,9 +708,12 @@ class GameScene extends Phaser.Scene {
                 break;
             }
             
-            // If it's a littlebit point, add it to our list
-            if (nextPoint && nextPoint.type === 'littlebit') {
-                console.log('Found littlebit point at', nextPos);
+            // If it's a littlebit point OR start3, add it to our list (treat start3 like littlebit)
+            const isLittlebit = nextPoint && nextPoint.type === 'littlebit';
+            const isStart3 = nextPoint && nextPoint.id === 'start3';
+            
+            if (isLittlebit || isStart3) {
+                console.log(isStart3 ? 'Found start3 (treated as littlebit) at' : 'Found littlebit point at', nextPos);
                 littlebitPointsFound.push({ pos: nextPos, pathSoFar: [...path, nextPos] });
                 path.push(nextPos);
                 currentPos = { ...nextPos };
@@ -799,6 +890,10 @@ class GameScene extends Phaser.Scene {
             return Promise.resolve();
         }
         
+        // Track turn for easter egg
+        this.turnSequence.push('left');
+        this.checkSpinEasterEgg();
+        
         return new Promise((resolve) => {
             const currentAngle = this.normalizeAngle(this.playerAngle);
             console.log(`Attempting to turn left from angle: ${(currentAngle * 180 / Math.PI).toFixed(1)}°`);
@@ -858,6 +953,10 @@ class GameScene extends Phaser.Scene {
             console.log('Cannot turn right: no connections available');
             return Promise.resolve();
         }
+        
+        // Track turn for easter egg
+        this.turnSequence.push('right');
+        this.checkSpinEasterEgg();
         
         return new Promise((resolve) => {
             const currentAngle = this.normalizeAngle(this.playerAngle);
@@ -980,57 +1079,147 @@ class GameScene extends Phaser.Scene {
             window.blocklySystem.updateScore(this.score);
         }
         
-        // Show win message
-        const winText = this.add.text(
-            this.cameras.main.centerX,
-            this.cameras.main.centerY,
-            `🎉 You reached ${this.destination.name}! 🎉\n+1 point!\n\nStarting new challenge...`,
-            {
-                fontSize: '32px',
-                fill: '#ffffff',
-                backgroundColor: '#4CAF50',
-                padding: { x: 30, y: 20 },
-                align: 'center'
-            }
-        ).setOrigin(0.5).setScrollFactor(0).setDepth(100);
+        // Show Lottie win animation
+        const overlay = document.getElementById('win-overlay');
+        const message = document.getElementById('win-message');
+        message.textContent = `Good job. You found ${this.destination.name}! +1 Point!`;
+        
+        overlay.style.display = 'flex';
+        
+        // Play animation
+        if (window.winAnimation) {
+            window.winAnimation.play();
+        }
         
         // Auto-start new game after 3 seconds
         this.time.delayedCall(3000, () => {
-            if (winText.active) {
-                winText.destroy();
-                this.initializeGame(); // Start new game with new start/destination
+            overlay.style.display = 'none';
+            if (window.winAnimation) {
+                window.winAnimation.stop();
             }
+            this.initializeGame(); // Start new game with new start/destination
         });
     }
 
     handleFailure() {
         console.log('Player did not reach destination');
         
-        // Show failure message
-        const failText = this.add.text(
-            this.cameras.main.centerX,
-            this.cameras.main.centerY,
-            `Sorry!\n\nYou didn't reach ${this.destination.name}\nReturning to start...`,
-            {
-                fontSize: '32px',
-                fill: '#ffffff',
-                backgroundColor: '#f44336',
-                padding: { x: 30, y: 20 },
-                align: 'center'
-            }
-        ).setOrigin(0.5).setScrollFactor(0).setDepth(100);
+        // Show Lottie lose animation
+        const overlay = document.getElementById('lose-overlay');
+        const message = document.getElementById('lose-message');
+        message.textContent = `Sorry. That's not ${this.destination.name}. Try again!`;
+        
+        overlay.style.display = 'flex';
+        
+        // Play animation
+        if (window.loseAnimation) {
+            window.loseAnimation.play();
+        }
         
         // Reset player to starting position after 2 seconds
         this.time.delayedCall(2000, () => {
-            if (failText.active) {
-                failText.destroy();
-                this.resetToStart();
+            overlay.style.display = 'none';
+            if (window.loseAnimation) {
+                window.loseAnimation.stop();
             }
+            this.resetToStart();
         });
+    }
+
+    checkSpinEasterEgg() {
+        // Keep only the last 6 turns
+        if (this.turnSequence.length > 6) {
+            this.turnSequence = this.turnSequence.slice(-6);
+        }
+        
+        // Minimum of 4 turns required
+        if (this.turnSequence.length >= 4) {
+            // Check for alternating pattern (left-right-left-right or right-left-right-left)
+            let isAlternating = true;
+            for (let i = 1; i < this.turnSequence.length; i++) {
+                if (this.turnSequence[i] === this.turnSequence[i - 1]) {
+                    isAlternating = false;
+                    break;
+                }
+            }
+            
+            // Check for repeating pattern (left-left-left-left or right-right-right-right)
+            let isRepeating = true;
+            const firstTurn = this.turnSequence[this.turnSequence.length - 1];
+            for (let i = this.turnSequence.length - 4; i < this.turnSequence.length; i++) {
+                if (this.turnSequence[i] !== firstTurn) {
+                    isRepeating = false;
+                    break;
+                }
+            }
+            
+            if (isAlternating) {
+                console.log('🎉 Easter egg triggered! Player is spinning around (alternating)!');
+                this.triggerSpinEasterEgg();
+            } else if (isRepeating) {
+                console.log('🎉 Easter egg triggered! Player is going in circles (repeating)!');
+                this.triggerSpinEasterEgg();
+            }
+        }
+    }
+
+    triggerSpinEasterEgg() {
+        // Clear the turn sequence
+        this.turnSequence = [];
+        
+        // Stop any ongoing execution
+        this.isExecuting = false;
+        this.gameOver = true;
+        
+        // Deduct a point (but don't go below 0)
+        if (this.score > 0) {
+            this.score--;
+            const scoreValue = document.getElementById('score-value');
+            if (scoreValue) {
+                scoreValue.textContent = this.score;
+            }
+        }
+        
+        // Create overlay div for the gif
+        const overlay = document.createElement('div');
+        overlay.id = 'easter-egg-overlay';
+        overlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        `;
+        
+        const gif = document.createElement('img');
+        gif.src = 'assets/images/-1.gif';
+        gif.style.cssText = `
+            max-width: 80%;
+            max-height: 80%;
+            border-radius: 10px;
+            box-shadow: 0 0 30px rgba(255, 255, 255, 0.5);
+        `;
+        
+        overlay.appendChild(gif);
+        document.body.appendChild(overlay);
+        
+        // Remove overlay after 3 seconds and reset player
+        setTimeout(() => {
+            overlay.remove();
+            this.resetToStart();
+        }, 3000);
     }
 
     resetToStart() {
         if (!this.startingPosition) return;
+        
+        // Reset turn sequence for easter egg
+        this.turnSequence = [];
         
         // Reset player to starting position
         this.currentPlayerPosition = { ...this.startingPosition };
@@ -1038,6 +1227,11 @@ class GameScene extends Phaser.Scene {
         this.updatePlayerSprite();
         this.updateCurrentConnections();
         this.setInitialPlayerDirection();
+        
+        // Highlight the player after a brief delay to ensure sprite is fully updated
+        this.time.delayedCall(100, () => {
+            this.highlightPlayer();
+        });
         
         // Reset game state
         this.gameOver = false;
