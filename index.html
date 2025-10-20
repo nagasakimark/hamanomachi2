@@ -43,12 +43,20 @@
         <div id="blocks-panel">
             <!-- Goal and Score Display -->
             <div id="game-info">
-                <div id="goal-display">Goal: <span id="goal-text">Loading...</span></div>
+                <div id="goal-display">
+                    <span id="goal-label">Goal: </span><span id="goal-text">Loading...</span>
+                    <button id="audio-play-button" class="audio-play-button" title="Play Audio" style="display: none;">
+                        <img src="assets/images/audio.png" alt="Play Audio">
+                    </button>
+                </div>
                 <div id="score-display">Score: <span id="score-value">0</span></div>
                 <button id="qr-button" class="qr-button" title="Show QR Code">
                     <img src="assets/images/qrcode.png" alt="QR" style="width: 100%; height: 100%; object-fit: contain;">
                 </button>
             </div>
+            
+            <!-- Hidden audio element for playing destination audio -->
+            <audio id="destination-audio" style="display: none;"></audio>
             
             <!-- Blockly Workspace -->
             <div id="blocklyDiv"></div>

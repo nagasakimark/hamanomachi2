@@ -1,4 +1,7 @@
 // Game configuration and Hamanomachi integration
+// Audio mode setting (1 = enabled, 0 = disabled)
+const AUDIO_MODE = 1;
+
 class GameScene extends Phaser.Scene {
     constructor() {
         super({ key: 'GameScene' });
@@ -219,13 +222,43 @@ class GameScene extends Phaser.Scene {
         }
         
         // Update UI immediately (before blocklySystem might be ready)
+        const goalLabel = document.getElementById('goal-label');
         const goalText = document.getElementById('goal-text');
-        if (goalText) {
-            goalText.textContent = this.destination.name;
-        }
         const scoreValue = document.getElementById('score-value');
         if (scoreValue) {
             scoreValue.textContent = this.score;
+        }
+        
+        // Setup audio mode if enabled
+        if (AUDIO_MODE === 1) {
+            const audioButton = document.getElementById('audio-play-button');
+            const audioElement = document.getElementById('destination-audio');
+            
+            if (audioButton && audioElement) {
+                // Hide only the goal text, keep "Goal:" label visible
+                if (goalText) {
+                    goalText.style.display = 'none';
+                }
+                audioButton.style.display = 'inline-block';
+                
+                // Convert destination name to audio filename
+                const audioFilename = this.getAudioFilename(this.destination.name);
+                audioElement.src = `assets/audio/female/${audioFilename}`;
+                
+                // Remove any existing click handlers and add new one
+                audioButton.onclick = () => {
+                    audioElement.currentTime = 0; // Reset to start
+                    audioElement.play().catch(err => {
+                        console.error('Audio playback failed:', err);
+                    });
+                };
+            }
+        } else {
+            // If audio mode is disabled, show the destination name
+            if (goalText) {
+                goalText.style.display = 'inline';
+                goalText.textContent = this.destination.name;
+            }
         }
         
         // Also update via blocklySystem if available
@@ -245,6 +278,14 @@ class GameScene extends Phaser.Scene {
         
         // Draw debug info if enabled
         this.drawDebugInfo();
+    }
+
+    getAudioFilename(destinationName) {
+        // Remove all spaces and punctuation, convert to lowercase
+        return destinationName
+            .toLowerCase()
+            .replace(/[^a-z0-9]/g, '') // Remove everything except letters and numbers
+            + '.mp3';
     }
 
     updatePlayerSprite() {
@@ -1107,7 +1148,7 @@ class GameScene extends Phaser.Scene {
         // Show Lottie lose animation
         const overlay = document.getElementById('lose-overlay');
         const message = document.getElementById('lose-message');
-        message.textContent = `Sorry. That's not ${this.destination.name}. Try again!`;
+        message.textContent = 'Sorry. Try again!'; // Don't reveal the destination name
         
         overlay.style.display = 'flex';
         
