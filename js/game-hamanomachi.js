@@ -438,8 +438,8 @@ class GameScene extends Phaser.Scene {
             this.drawPoints();
         }
         
-        // Always draw destination
-        if (this.destination) {
+        // Draw destination (unless audio mode is enabled)
+        if (this.destination && AUDIO_MODE !== 1) {
             const gameWidth = this.sys.game.config.width;
             const gameHeight = this.sys.game.config.height;
             const scaledWidth = this.mapSprite.width * this.mapScale;
@@ -506,6 +506,11 @@ class GameScene extends Phaser.Scene {
         const mapOffsetY = (gameHeight - scaledHeight) / 2;
         
         this.mapData.points.forEach(point => {
+            // Skip drawing destination point if audio mode is enabled
+            if (AUDIO_MODE === 1 && point.type === 'destination') {
+                return;
+            }
+            
             let color;
             switch(point.type) {
                 case 'start': color = 0x00c853; break;
