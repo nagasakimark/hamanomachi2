@@ -1,18 +1,11 @@
 // Touch event polyfill for Blockly
 // Converts touch events to pointer events that Blockly handles better
+// Always enabled to support all devices, including those that don't properly identify as touch devices
 
 (function() {
     'use strict';
     
-    // Check if we're on a touch device
-    const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    
-    if (!isTouchDevice) {
-        console.log('Not a touch device, polyfill not needed');
-        return;
-    }
-    
-    console.log('Touch polyfill activated');
+    console.log('Touch polyfill activated for all devices');
     
     // Map touch events to mouse events
     const touchEventMap = {
