@@ -1,6 +1,6 @@
 // Game configuration and Hamanomachi integration
 // Audio mode setting (1 = enabled, 0 = disabled)
-const AUDIO_MODE = 1;
+const AUDIO_MODE = 0;
 
 class GameScene extends Phaser.Scene {
     constructor() {
