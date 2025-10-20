@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phaser.js Block Programming Game</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+    <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+</head>
+<body>
+    <div id="container">
+        <!-- Left Panel: Game Area -->
+        <div id="game-panel">
+            <div id="game-container"></div>
+        </div>
+
+        <!-- Right Panel: Block Programming Interface -->
+        <div id="blocks-panel">
+            <h3>Programming Blocks</h3>
+            
+            <!-- Blockly Workspace -->
+            <div id="blocklyDiv"></div>
+            
+            <!-- Program Controls -->
+            <div id="program-controls">
+                <button id="run-blockly">Run Program</button>
+                <button id="clear-blockly">Clear Blocks</button>
+                <button id="show-code">Show Code</button>
+            </div>
+            
+            <!-- Code Display (hidden by default) -->
+            <div id="code-display" style="display: none;">
+                <h4>Generated Code:</h4>
+                <pre id="code-content"></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- Note: game-hamanomachi.js is loaded dynamically by main.js -->
+    <script src="js/blockly-config.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+<!-- This is a placeholder for the logo.png file -->
+<!-- Please replace this with your actual logo.png file -->
+<!-- The file should be placed at: /assets/images/logo.png -->
+
+<!-- For now, you can use any 24x24 pixel PNG image as a logo -->
+<!-- Or create a simple icon that represents your game -->
+
+<!-- Recommended logo specifications: -->
+<!-- - Size: 24x24 pixels (or larger, will be scaled down) -->
+<!-- - Format: PNG with transparency -->
+<!-- - Style: Simple, colorful icon that represents programming/gaming -->
+<!-- - Colors: Bright and appealing to kids -->
