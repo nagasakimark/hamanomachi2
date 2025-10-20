@@ -5,7 +5,7 @@ Blockly.defineBlocksWithJsonArray([
     // Start block
     {
         "type": "start",
-        "message0": "when ▶ clicked",
+        "message0": "start ▶",
         "nextStatement": null,
         "colour": "#28A745", // Green color
         "tooltip": "Starting point - connect your program here",
@@ -152,7 +152,7 @@ Blockly.Blocks['go_straight_littlebit'] = {
 Blockly.Blocks['start'] = {
     init: function() {
         this.appendDummyInput()
-            .appendField("when ▶ clicked");
+            .appendField("start ▶");
         this.setNextStatement(true, null);
         this.setColour("#28A745");
         this.setTooltip("Starting point - connect your program here");
@@ -456,66 +456,37 @@ class BlocklySystem {
             if (event.type === Blockly.Events.BLOCK_DRAG) {
                 // Find the trash SVG element
                 const trashElement = document.querySelector('g.blocklyTrash');
-                const toolboxElement = document.querySelector('.blocklyToolboxDiv');
-                
                 if (trashElement) {
                     if (event.isStart) {
                         // Block drag started
                         isDraggingBlock = true;
                         console.log('Block drag started');
                     } else {
-                        // Block drag ended - reset trash and toolbox to normal
+                        // Block drag ended - reset trash to green
                         isDraggingBlock = false;
                         trashElement.classList.remove('blocklyTrashDelete');
-                        if (toolboxElement) {
-                            toolboxElement.classList.remove('blocklyToolboxDelete');
-                        }
-                        console.log('Block drag ended, trash and toolbox reset');
+                        console.log('Block drag ended, trash reset to green');
                     }
                 }
             }
         });
         
-        // Monitor when blocks are dragged over the trash OR toolbox
+        // Monitor when blocks are dragged over the trash
         const trashElement = document.querySelector('g.blocklyTrash');
-        const toolboxElement = document.querySelector('.blocklyToolboxDiv');
-        
         if (trashElement) {
-            console.log('Setting up trash and toolbox hover detection');
+            console.log('Setting up trash hover detection on SVG element');
             setInterval(() => {
-                if (isDraggingBlock) {
-                    // Check trash
-                    if (this.workspace.trashcan) {
-                        const isOverTrash = this.workspace.trashcan.isOpen;
-                        if (isOverTrash) {
-                            if (!trashElement.classList.contains('blocklyTrashDelete')) {
-                                trashElement.classList.add('blocklyTrashDelete');
-                                console.log('Block over trash - turning red');
-                            }
-                        } else {
-                            if (trashElement.classList.contains('blocklyTrashDelete')) {
-                                trashElement.classList.remove('blocklyTrashDelete');
-                                console.log('Block not over trash - back to green');
-                            }
+                if (isDraggingBlock && this.workspace.trashcan) {
+                    const isOverTrash = this.workspace.trashcan.isOpen;
+                    if (isOverTrash) {
+                        if (!trashElement.classList.contains('blocklyTrashDelete')) {
+                            trashElement.classList.add('blocklyTrashDelete');
+                            console.log('Block over trash - turning red');
                         }
-                    }
-                    
-                    // Check toolbox (Blockly treats it as a delete area)
-                    if (this.workspace.toolbox_ && toolboxElement) {
-                        const isOverToolbox = this.workspace.toolbox_.position === this.workspace.deleteAreaToolbox_;
-                        // Check if the current drag target would delete on the toolbox
-                        const wouldDelete = this.workspace.isDeleteArea && this.workspace.isDeleteArea();
-                        
-                        if (wouldDelete || (this.workspace.deleteAreaToolbox_ && this.workspace.deleteAreaToolbox_.wouldDelete())) {
-                            if (!toolboxElement.classList.contains('blocklyToolboxDelete')) {
-                                toolboxElement.classList.add('blocklyToolboxDelete');
-                                console.log('Block over toolbox - turning red');
-                            }
-                        } else {
-                            if (toolboxElement.classList.contains('blocklyToolboxDelete')) {
-                                toolboxElement.classList.remove('blocklyToolboxDelete');
-                                console.log('Block not over toolbox - back to normal');
-                            }
+                    } else {
+                        if (trashElement.classList.contains('blocklyTrashDelete')) {
+                            trashElement.classList.remove('blocklyTrashDelete');
+                            console.log('Block not over trash - back to green');
                         }
                     }
                 }
