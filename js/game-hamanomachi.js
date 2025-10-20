@@ -1263,7 +1263,7 @@ function getGameConfig() {
         width: containerWidth,
         height: containerHeight,
         parent: 'game-container',
-        backgroundColor: '#87CEEB',
+        backgroundColor: '#FFFFFF',
         scene: GameScene,
         physics: {
             default: 'arcade',
