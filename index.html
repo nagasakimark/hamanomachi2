@@ -2,11 +2,16 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Phaser.js Block Programming Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hamanomachi</title>
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
-    <script src="https://unpkg.com/blockly/blockly.min.js"></script>
+    <!-- Touch polyfill must load BEFORE Blockly -->
+    <script src="js/touch-polyfill.js"></script>
+    <script src="https://unpkg.com/blockly/blockly_compressed.js"></script>
+    <script src="https://unpkg.com/blockly/blocks_compressed.js"></script>
+    <script src="https://unpkg.com/blockly/javascript_compressed.js"></script>
+    <script src="https://unpkg.com/blockly/msg/en.js"></script>
 </head>
 <body>
     <div id="container">
@@ -17,22 +22,27 @@
 
         <!-- Right Panel: Block Programming Interface -->
         <div id="blocks-panel">
-            <h3>Programming Blocks</h3>
+            <!-- Goal and Score Display -->
+            <div id="game-info">
+                <div id="goal-display">Goal: <span id="goal-text">Loading...</span></div>
+                <div id="score-display">Score: <span id="score-value">0</span></div>
+                <button id="qr-button" class="qr-button" title="Show QR Code">
+                    <img src="assets/images/qrcode.png" alt="QR" style="width: 100%; height: 100%; object-fit: contain;">
+                </button>
+            </div>
             
             <!-- Blockly Workspace -->
             <div id="blocklyDiv"></div>
             
-            <!-- Program Controls -->
-            <div id="program-controls">
-                <button id="run-blockly">Run Program</button>
-                <button id="clear-blockly">Clear Blocks</button>
-                <button id="show-code">Show Code</button>
-            </div>
+            <!-- Play Button (overlays bottom left) -->
+            <button id="run-program" class="play-button" title="Run Program">▶</button>
             
-            <!-- Code Display (hidden by default) -->
-            <div id="code-display" style="display: none;">
-                <h4>Generated Code:</h4>
-                <pre id="code-content"></pre>
+            <!-- QR Code Modal -->
+            <div id="qr-modal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <span class="close-modal">&times;</span>
+                    <img src="assets/images/qrcode.png" alt="QR Code">
+                </div>
             </div>
         </div>
     </div>

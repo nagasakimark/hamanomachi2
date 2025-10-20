@@ -253,12 +253,9 @@ const blocklyConfig = {
         }
     }),
     move: {
-        scrollbars: {
-            horizontal: false,
-            vertical: true
-        },
-        drag: false,  // Disable workspace dragging to fix touch issues
-        wheel: false
+        scrollbars: false,  // Disable all scrollbars
+        drag: false,        // Disable workspace dragging completely
+        wheel: false        // Disable wheel zoom
     }
 };
 
@@ -332,12 +329,7 @@ class BlocklySystem {
     }
     
     setupTouchEventHandling() {
-        // Disable workspace scrolling/panning which causes blocks to disappear on touch
-        if (this.workspace && this.workspace.options) {
-            this.workspace.options.moveOptions = this.workspace.options.moveOptions || {};
-            this.workspace.options.moveOptions.drag = false;
-            this.workspace.options.moveOptions.wheel = false;
-        }
+        // Simple fix: just disable all workspace gestures to prevent panning interference
         console.log('Touch event handling configured for Blockly');
     }
     
@@ -514,42 +506,36 @@ class BlocklySystem {
     
     setupEventListeners() {
         // Run program button
-        const runButton = document.getElementById('run-blockly');
+        const runButton = document.getElementById('run-program');
         if (runButton) {
             runButton.addEventListener('click', () => {
                 this.executeProgram();
             });
         }
         
-        // Clear blocks button
-        const clearButton = document.getElementById('clear-blockly');
-        if (clearButton) {
-            clearButton.addEventListener('click', () => {
-                this.clearWorkspace();
+        // QR code button and modal
+        const qrButton = document.getElementById('qr-button');
+        const qrModal = document.getElementById('qr-modal');
+        const closeModal = document.querySelector('.close-modal');
+        
+        if (qrButton && qrModal) {
+            qrButton.addEventListener('click', () => {
+                qrModal.style.display = 'flex';
             });
         }
         
-        // Show code button
-        const showCodeButton = document.getElementById('show-code');
-        if (showCodeButton) {
-            showCodeButton.addEventListener('click', () => {
-                this.toggleCodeDisplay();
+        if (closeModal && qrModal) {
+            closeModal.addEventListener('click', () => {
+                qrModal.style.display = 'none';
             });
         }
         
-        // Game control buttons
-        const stopButton = document.getElementById('stop-button');
-        const resetButton = document.getElementById('reset-button');
-        
-        if (stopButton) {
-            stopButton.addEventListener('click', () => {
-                this.stopProgram();
-            });
-        }
-        
-        if (resetButton) {
-            resetButton.addEventListener('click', () => {
-                this.resetGame();
+        // Close modal when clicking outside
+        if (qrModal) {
+            qrModal.addEventListener('click', (e) => {
+                if (e.target === qrModal) {
+                    qrModal.style.display = 'none';
+                }
             });
         }
     }
@@ -775,87 +761,24 @@ class BlocklySystem {
     }
     
     showMessage(text) {
-        // Remove existing message
-        const existingMessage = document.querySelector('.status-message');
-        if (existingMessage) {
-            existingMessage.remove();
-        }
-        
-        // Create new message
-        const message = document.createElement('div');
-        message.className = 'status-message';
-        message.textContent = text;
-        
-        // Insert at top of blocks panel
-        const blocksPanel = document.getElementById('blocks-panel');
-        const firstChild = blocksPanel.firstChild;
-        blocksPanel.insertBefore(message, firstChild);
-        
-        // Remove message after 3 seconds
-        setTimeout(() => {
-            if (message.parentNode) {
-                message.remove();
-            }
-        }, 3000);
+        // Status messages disabled - using goal/score display instead
+        console.log('Status:', text);
     }
     
     updateDestination(destinationName) {
-        // Remove existing destination display
-        const existingDestination = document.querySelector('.destination-display');
-        if (existingDestination) {
-            existingDestination.remove();
+        // Update the goal display
+        const goalText = document.getElementById('goal-text');
+        if (goalText) {
+            goalText.textContent = destinationName;
         }
-        
-        // Create destination display
-        const destinationDiv = document.createElement('div');
-        destinationDiv.className = 'destination-display';
-        destinationDiv.innerHTML = `
-            <div class="destination-header">🎯 Your Destination</div>
-            <div class="destination-name">${destinationName}</div>
-            <div class="destination-hint">Use blocks below to navigate!</div>
-        `;
-        
-        // Style the destination display
-        destinationDiv.style.cssText = `
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 15px;
-            margin-bottom: 15px;
-            border-radius: 12px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            text-align: center;
-            font-family: Arial, sans-serif;
-            border: 3px solid #fff;
-        `;
-        
-        // Style individual elements
-        const style = document.createElement('style');
-        style.textContent = `
-            .destination-header {
-                font-size: 16px;
-                font-weight: bold;
-                margin-bottom: 8px;
-                text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
-            }
-            .destination-name {
-                font-size: 20px;
-                font-weight: bold;
-                margin-bottom: 5px;
-                text-shadow: 2px 2px 4px rgba(0,0,0,0.4);
-                color: #FFE4B5;
-            }
-            .destination-hint {
-                font-size: 12px;
-                opacity: 0.9;
-                font-style: italic;
-            }
-        `;
-        document.head.appendChild(style);
-        
-        // Insert at top of blocks panel
-        const blocksPanel = document.getElementById('blocks-panel');
-        const firstChild = blocksPanel.firstChild;
-        blocksPanel.insertBefore(destinationDiv, firstChild);
+    }
+    
+    updateScore(score) {
+        // Update the score display
+        const scoreValue = document.getElementById('score-value');
+        if (scoreValue) {
+            scoreValue.textContent = score;
+        }
     }
     
     resizeWorkspace() {

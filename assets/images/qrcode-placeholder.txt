@@ -1,0 +1,2 @@
+Please replace this with your actual QR code image at:
+assets/images/qrcode.png

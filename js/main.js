@@ -17,8 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     const blocklySystem = initBlocklySystem();
                     console.log('Hamanomachi game and Blockly system initialized successfully!');
                     
-                    // Add welcome message
-                    showWelcomeMessage();
+                    // Welcome message removed - using goal/score display instead
                     
                     // Store reference globally for debugging
                     window.blocklySystem = blocklySystem;
@@ -53,27 +52,7 @@ function initBlocklySystem() {
 }
 
 function showWelcomeMessage() {
-    const message = document.createElement('div');
-    message.className = 'status-message';
-    message.innerHTML = `
-        <strong>Welcome to Hamanomachi Navigation Game!</strong><br>
-        🗾 Navigate through Hamanomachi using visual blocks<br>
-        🎯 Your destination will appear at the top of this panel<br>
-        🧩 Drag blocks to create your navigation program<br>
-        ▶️ Click "Run Program" to execute your route<br>
-        🔄 Click "Reset" to restart at a new location
-    `;
-    
-    const blocksPanel = document.getElementById('blocks-panel');
-    const firstChild = blocksPanel.firstChild;
-    blocksPanel.insertBefore(message, firstChild);
-    
-    // Remove welcome message after 10 seconds
-    setTimeout(() => {
-        if (message.parentNode) {
-            message.remove();
-        }
-    }, 10000);
+    // Welcome message disabled - using goal/score display instead
 }
 
 function showErrorMessage(text) {
@@ -218,30 +197,7 @@ function showKeyboardHelp() {
     }, 10000);
 }
 
-// Add help button
-document.addEventListener('DOMContentLoaded', function() {
-    const helpButton = document.createElement('button');
-    helpButton.textContent = '?';
-    helpButton.style.cssText = `
-        position: fixed;
-        bottom: 20px;
-        right: 20px;
-        width: 40px;
-        height: 40px;
-        border-radius: 50%;
-        background: #3498db;
-        color: white;
-        border: none;
-        font-size: 18px;
-        font-weight: bold;
-        cursor: pointer;
-        z-index: 1000;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-    `;
-    helpButton.title = 'Show keyboard shortcuts';
-    helpButton.addEventListener('click', showKeyboardHelp);
-    document.body.appendChild(helpButton);
-});
+// Help button removed - not needed
 
 // Error handling
 window.addEventListener('error', function(e) {

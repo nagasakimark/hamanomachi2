@@ -54,13 +54,44 @@ body {
     max-width: 450px;
     display: flex;
     flex-direction: column;
+    position: relative; /* For absolute positioning of play button */
 }
 
-#blocks-panel h3 {
-    color: #2c3e50;
+/* Game info display */
+#game-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
     margin-bottom: 15px;
-    text-align: center;
-    font-size: clamp(1rem, 2.5vw, 1.2em);
+    flex-shrink: 0;
+}
+
+#goal-display, #score-display {
+    flex: 1;
+    background-color: #fff;
+    color: #2c3e50;
+    padding: 10px 12px;
+    border-radius: 4px;
+    border: 2px solid #bdc3c7;
+    font-weight: 600;
+    font-size: clamp(0.8rem, 1.6vw, 0.9rem);
+}
+
+#goal-display {
+    flex: 2;
+}
+
+#goal-text, #score-value {
+    display: block;
+    font-size: clamp(0.9rem, 2vw, 1.1rem);
+    margin-top: 2px;
+    color: #34495e;
+    font-weight: 700;
+}
+
+#game-info .qr-button {
+    width: 50px;
+    height: 50px;
     flex-shrink: 0;
 }
 
@@ -282,78 +313,106 @@ body {
     stroke-opacity: 0.3 !important;
 }
 
-/* Program controls */
-#program-controls {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 10px;
-    flex-wrap: wrap;
-    flex-shrink: 0;
-}
-
-#program-controls button {
-    flex: 1;
-    min-width: 80px;
-    padding: clamp(6px, 1.2vh, 8px) clamp(8px, 1.5vw, 12px);
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-    transition: background-color 0.3s;
-    font-size: clamp(0.7rem, 1.4vh, 0.8rem);
-}
-
-#run-blockly {
+/* Play button - positioned absolutely to overlay blocks area */
+.play-button {
+    position: absolute;
+    bottom: 80px; /* Moved up from 15px */
+    left: 15px;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
     background-color: #27ae60;
     color: white;
+    border: none;
+    font-size: 28px;
+    cursor: pointer;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-left: 4px;
+    z-index: 100;
 }
 
-#run-blockly:hover {
+.play-button:hover {
     background-color: #229954;
+    transform: scale(1.05);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.3);
 }
 
-#clear-blockly {
-    background-color: #e74c3c;
-    color: white;
+.play-button:active {
+    transform: scale(0.95);
 }
 
-#clear-blockly:hover {
-    background-color: #c0392b;
+.qr-button {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    background-color: #fff;
+    border: 2px solid #bdc3c7;
+    cursor: pointer;
+    padding: 5px;
+    transition: all 0.3s;
 }
 
-#show-code {
-    background-color: #3498db;
-    color: white;
+.qr-button:hover {
+    border-color: #95a5a6;
+    transform: scale(1.05);
 }
 
-#show-code:hover {
-    background-color: #2980b9;
+.qr-button:active {
+    transform: scale(0.95);
 }
 
-/* Code display */
-#code-display {
-    background-color: #2c3e50;
-    border-radius: 5px;
-    padding: 10px;
-    margin-top: 10px;
-    max-height: 150px;
-    overflow-y: auto;
-    flex-shrink: 0;
+/* Modal styles */
+.modal {
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-#code-display h4 {
-    color: #ecf0f1;
-    margin: 0 0 8px 0;
-    font-size: 0.9rem;
+.modal-content {
+    background-color: #fff;
+    padding: 30px;
+    border-radius: 12px;
+    max-width: 500px; /* Limit max width */
+    max-height: 90%;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
-#code-content {
-    color: #e74c3c;
-    font-family: 'Courier New', monospace;
-    font-size: 0.75rem;
-    margin: 0;
-    white-space: pre-wrap;
-    word-wrap: break-word;
+.modal-content img {
+    max-width: 100%;
+    max-height: 70vh; /* Limit height to 70% of viewport */
+    height: auto;
+    width: auto;
+    object-fit: contain;
+}
+
+.close-modal {
+    position: absolute;
+    top: 10px;
+    right: 20px;
+    font-size: 35px;
+    font-weight: bold;
+    color: #7f8c8d;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.close-modal:hover {
+    color: #2c3e50;
 }
 
 /* Responsive design */

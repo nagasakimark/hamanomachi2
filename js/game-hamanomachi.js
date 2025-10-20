@@ -35,6 +35,9 @@ class GameScene extends Phaser.Scene {
         this.commandQueue = [];
         this.isExecuting = false;
         
+        // Score tracking
+        this.score = 0;
+        
         // Debug settings
         this.showPoints = false;
         this.showPaths = false;
@@ -188,9 +191,24 @@ class GameScene extends Phaser.Scene {
         this.updateCurrentConnections();
         this.setInitialPlayerDirection();
         
-        // Update UI if blockly system is available
-        if (window.blocklySystem && window.blocklySystem.updateDestination) {
-            window.blocklySystem.updateDestination(this.destination.name);
+        // Update UI immediately (before blocklySystem might be ready)
+        const goalText = document.getElementById('goal-text');
+        if (goalText) {
+            goalText.textContent = this.destination.name;
+        }
+        const scoreValue = document.getElementById('score-value');
+        if (scoreValue) {
+            scoreValue.textContent = this.score;
+        }
+        
+        // Also update via blocklySystem if available
+        if (window.blocklySystem) {
+            if (window.blocklySystem.updateDestination) {
+                window.blocklySystem.updateDestination(this.destination.name);
+            }
+            if (window.blocklySystem.updateScore) {
+                window.blocklySystem.updateScore(this.score);
+            }
         }
         
         this.gameOver = false;
@@ -954,13 +972,19 @@ class GameScene extends Phaser.Scene {
 
     handleWin() {
         this.gameOver = true;
+        this.score += 1; // Award 1 point for reaching destination
         console.log(`Congratulations! You reached ${this.destination.name}!`);
+        
+        // Update score display
+        if (window.blocklySystem && window.blocklySystem.updateScore) {
+            window.blocklySystem.updateScore(this.score);
+        }
         
         // Show win message
         const winText = this.add.text(
             this.cameras.main.centerX,
             this.cameras.main.centerY,
-            `🎉 You reached ${this.destination.name}! 🎉\n\nStarting new challenge...`,
+            `🎉 You reached ${this.destination.name}! 🎉\n+1 point!\n\nStarting new challenge...`,
             {
                 fontSize: '32px',
                 fill: '#ffffff',
