@@ -1,5 +1,9 @@
-# Ignore old Hamanomachi folder
-Hamanomachi/
-
-# Ignore README
-README.md
+# Ignore old Hamanomachi folder (root only — game/maps/hamanomachi/ must stay tracked)
+/Hamanomachi/
+/2dcitywithoutoutline/
+/2dcitywithoutoutline.zip
+# Ignore the old root README (game/README.md is the current one)
+/README.md
+# New game build output
+game/node_modules/
+game/dist/

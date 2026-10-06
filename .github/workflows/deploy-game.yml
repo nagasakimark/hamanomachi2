@@ -1,0 +1,57 @@
+# Builds the new game in game/ and publishes ONLY the built output
+# (game/dist) to nagasakimark/hamanomachi3 for GitHub Pages hosting.
+# No raw source is pushed to hamanomachi3 — just the static build.
+#
+# Active copy: .github/workflows/deploy-game.yml (GitHub only runs workflows
+# from there). This file is kept in sync for reference.
+#
+# One-time setup:
+#   1. Create a classic PAT with `repo` scope (Settings > Developer settings >
+#      Personal access tokens) and save it in THIS repo as secret HAMANOMACHI3_TOKEN
+#      (Settings > Secrets and variables > Actions > New repository secret).
+#   2. In hamanomachi3 repo: Settings > Pages > Build and deployment > Source:
+#      "Deploy from a branch", Branch: "main" / root.
+name: Deploy game to hamanomachi3
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - 'game/**'
+      - '.github/workflows/deploy-game.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-hamanomachi3
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: game
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: game/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run build
+      - name: Publish dist/ only to hamanomachi3
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          personal_token: ${{ secrets.HAMANOMACHI3_TOKEN }}
+          external_repository: nagasakimark/hamanomachi3
+          publish_branch: main
+          publish_dir: game/dist
+          force_orphan: false
+          keep_files: false
+          enable_jekyll: false
+          commit_message: 'Deploy build ${{ github.sha }}'
